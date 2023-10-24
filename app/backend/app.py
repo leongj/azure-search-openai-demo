@@ -106,8 +106,12 @@ async def ask():
 
 
 async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str, None]:
+    sentence = ""
     async for event in r:
-        yield json.dumps(event, ensure_ascii=False) + "\n"
+        payload = json.dumps(event, ensure_ascii=False)
+        sentence = sentence + payload
+        yield payload + "\n"
+    print("RESPONSE BY ASSISTANT: "+sentence)
 
 
 @bp.route("/chat", methods=["POST"])
