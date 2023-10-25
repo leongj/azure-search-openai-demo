@@ -5,7 +5,7 @@ import readNDJSONStream from "ndjson-readablestream";
 
 import styles from "./Chat.module.css";
 
-import { chatApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage } from "../../api";
+import { chatApi, persistApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -16,6 +16,7 @@ import { ClearChatButton } from "../../components/ClearChatButton";
 import { useLogin, getToken } from "../../authConfig";
 import { useMsal } from "@azure/msal-react";
 import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
+import { v4 as uuid } from "uuid";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -29,6 +30,9 @@ const Chat = () => {
     const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
     const [useOidSecurityFilter, setUseOidSecurityFilter] = useState<boolean>(false);
     const [useGroupsSecurityFilter, setUseGroupsSecurityFilter] = useState<boolean>(false);
+
+    // To simulate thread, if the user refresh the page browser or click refresh then this will change
+    const [threadSessionId, setThreadSessionId] = useState<string>(uuid());
 
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -141,9 +145,15 @@ const Chat = () => {
         }
     };
 
+    // Save the conversation to cosmosdb, doesn't do any auth or error checking atm
+    const persistConversationRequest = async (conversation: any) => {
+        await persistApi(conversation);
+    };
+
     const clearChat = () => {
         lastQuestionRef.current = "";
         error && setError(undefined);
+        setThreadSessionId(uuid()); //Reset thread session id
         setActiveCitation(undefined);
         setActiveAnalysisPanelTab(undefined);
         setAnswers([]);
@@ -154,6 +164,21 @@ const Chat = () => {
 
     useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading]);
     useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "auto" }), [streamedAnswers]);
+    useEffect(() => {
+        let messages = answers.flatMap(a => [
+            { content: a[0], role: "user" },
+            { content: a[1].choices[0].message.content, role: "assistant" }
+        ]);
+
+        if (messages.length != 0) {
+            let jsonPl = {
+                id: threadSessionId,
+                userId: "", //TODO: Don't have atm, need to grab it when auth is available
+                messages: [...messages]
+            };
+            persistConversationRequest(jsonPl);
+        }
+    }, [answers]);
 
     const onPromptTemplateChange = (_ev?: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
         setPromptTemplate(newValue || "");
