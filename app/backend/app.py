@@ -139,17 +139,22 @@ async def chat():
         logging.exception("Exception in /chat")
         return jsonify({"error": str(e)}), 500
 
-@bp.route("/persist", methods=["POST"])
-async def persist():
+# API for logging chat history to Cosmos
+@bp.route("/chatlog", methods=["POST"])
+async def chatlog():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     cosmos_client = current_app.config[CONFIG_COSMOS_CLIENT]
+    if cosmos_client is None:
+        # just return OK if Cosmos is not configured
+        return "",204
+    
     try:
         cosmos_client.upsert_item(request_json)
         return "",201
     except Exception as e:
-        logging.exception("Exception in /persist")
+        logging.exception("Exception in /chatlog")
         return jsonify({"error": str(e)}), 500
 
 
@@ -204,18 +209,19 @@ async def setup_clients():
     AZURE_SEARCH_QUERY_LANGUAGE = os.getenv("AZURE_SEARCH_QUERY_LANGUAGE", "en-us")
     AZURE_SEARCH_QUERY_SPELLER = os.getenv("AZURE_SEARCH_QUERY_SPELLER", "lexicon")
 
+    # Cosmos configs
+    # NOTE: run `azd env set COSMOS_ACCOUNT_HOST https://<cosmos_instance_name>.documents.azure.com:443/`for attribute below subsituting the key and the value 
+    COSMOS_ACCOUNT_NAME = os.environ.get('COSMOS_ACCOUNT_NAME')
+    COSMOS_MASTER_KEY = os.environ.get('COSMOS_ACCOUNT_KEY')
+    COSMOS_DATABASE_ID = os.environ.get('COSMOS_DATABASE', 'OpenAIChat')
+    COSMOS_CONTAINER_ID = os.environ.get('COSMOS_CONTAINER', 'Chats')
+
     # Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
     # just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the
     # keys for each service
     # If you encounter a blocking error during a DefaultAzureCredential resolution, you can exclude the problematic credential by using a parameter (ex. exclude_shared_token_cache_credential=True)
     azure_credential = DefaultAzureCredential(exclude_shared_token_cache_credential=True)
 
-    # Cosmos configs
-    # NOTE: run `azd env set COSMOS_ACCOUNT_HOST youraccounthost`for attribute below subsituting the key and the value 
-    COSMOS_HOST = os.environ.get('COSMOS_ACCOUNT_HOST')
-    COSMOS_MASTER_KEY = os.environ.get('COSMOS_ACCOUNT_KEY')
-    COSMOS_DATABASE_ID = os.environ.get('COSMOS_DATABASE', 'OpenAIChat')
-    COSMOS_CONTAINER_ID = os.environ.get('COSMOS_CONTAINER', 'Chats')
 
     # Set up authentication helper
     auth_helper = AuthenticationHelper(
@@ -237,7 +243,15 @@ async def setup_clients():
         account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net", credential=azure_credential
     )
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
-    cosmos_client = CosmosDBClient(COSMOS_HOST, COSMOS_MASTER_KEY, COSMOS_DATABASE_ID, COSMOS_CONTAINER_ID)
+    # if COSMOS_ACCOUNT_NAME isn't set, the /script/chatlog script hasn't been run. Set this to null so it does nothing in /chatlog
+    if COSMOS_ACCOUNT_NAME is None:
+        cosmos_client = None
+    else:
+        cosmos_client = CosmosDBClient(
+            f"https://{COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", 
+            COSMOS_MASTER_KEY, 
+            COSMOS_DATABASE_ID, 
+            COSMOS_CONTAINER_ID)
 
     # Used by the OpenAI SDK
     if OPENAI_HOST == "azure":

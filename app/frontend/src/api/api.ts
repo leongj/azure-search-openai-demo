@@ -40,15 +40,15 @@ export async function chatApi(request: ChatAppRequest, idToken: string | undefin
     });
 }
 
-export async function persistApi(request: any) {
-    const response = await fetch(`${BACKEND_URI}/persist`, {
+export async function chatlogApi(request: any) {
+    const response = await fetch(`${BACKEND_URI}/chatlog`, {
         method: "POST",
         headers: getHeaders("id"), //HACK, not sure what it does but don't need
         body: JSON.stringify(request)
     });
 
     if (response.status > 299 || !response.ok) {
-        throw Error("Failed to persist chat message");
+        throw Error("Failed to log chat message");
     }
 }
 

@@ -5,7 +5,7 @@ import readNDJSONStream from "ndjson-readablestream";
 
 import styles from "./Chat.module.css";
 
-import { chatApi, persistApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage } from "../../api";
+import { chatApi, chatlogApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -149,8 +149,8 @@ const Chat = () => {
     };
 
     // Save the conversation to cosmosdb, doesn't do any auth or error checking atm
-    const persistConversationRequest = async (conversation: any) => {
-        await persistApi(conversation);
+    const logConversationRequest = async (conversation: any) => {
+        await chatlogApi(conversation);
     };
 
     const clearChat = () => {
@@ -179,7 +179,7 @@ const Chat = () => {
                 userId: "", //TODO: Don't have atm, need to grab it when auth is available
                 messages: [...messages]
             };
-            persistConversationRequest(jsonPl);
+            logConversationRequest(jsonPl);
         }
     }, [answers]);
 
