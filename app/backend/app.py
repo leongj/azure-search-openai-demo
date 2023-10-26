@@ -31,7 +31,7 @@ from quart_cors import cors
 from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
 from core.authentication import AuthenticationHelper
-from core.cosmosdbclient import CosmosDBClient
+from azure.cosmos.aio import CosmosClient
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
@@ -40,7 +40,7 @@ CONFIG_CHAT_APPROACH = "chat_approach"
 CONFIG_BLOB_CONTAINER_CLIENT = "blob_container_client"
 CONFIG_AUTH_CLIENT = "auth_client"
 CONFIG_SEARCH_CLIENT = "search_client"
-CONFIG_COSMOS_CLIENT = "cosmos_client"
+CONFIG_COSMOS_CONTAINER = "cosmos_container"
 
 bp = Blueprint("routes", __name__, static_folder="static")
 
@@ -145,13 +145,13 @@ async def chatlog():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
-    cosmos_client = current_app.config[CONFIG_COSMOS_CLIENT]
-    if cosmos_client is None:
+    cosmos_container = current_app.config[CONFIG_COSMOS_CONTAINER]
+    if cosmos_container is None:
         # just return OK if Cosmos is not configured
         return "",204
     
     try:
-        cosmos_client.upsert_item(request_json)
+        await cosmos_container.upsert_item(request_json)
         return "",201
     except Exception as e:
         logging.exception("Exception in /chatlog")
@@ -210,10 +210,8 @@ async def setup_clients():
     AZURE_SEARCH_QUERY_SPELLER = os.getenv("AZURE_SEARCH_QUERY_SPELLER", "lexicon")
 
     # Cosmos configs
-    # NOTE: run `azd env set COSMOS_ACCOUNT_HOST https://<cosmos_instance_name>.documents.azure.com:443/`for attribute below subsituting the key and the value 
     COSMOS_ACCOUNT_NAME = os.environ.get('COSMOS_ACCOUNT_NAME')
-    COSMOS_MASTER_KEY = os.environ.get('COSMOS_ACCOUNT_KEY')
-    COSMOS_DATABASE_ID = os.environ.get('COSMOS_DATABASE', 'OpenAIChat')
+    COSMOS_DATABASE_ID = os.environ.get('COSMOS_DATABASE', 'ChatLog')
     COSMOS_CONTAINER_ID = os.environ.get('COSMOS_CONTAINER', 'Chats')
 
     # Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
@@ -247,11 +245,9 @@ async def setup_clients():
     if COSMOS_ACCOUNT_NAME is None:
         cosmos_client = None
     else:
-        cosmos_client = CosmosDBClient(
-            f"https://{COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", 
-            COSMOS_MASTER_KEY, 
-            COSMOS_DATABASE_ID, 
-            COSMOS_CONTAINER_ID)
+        cosmos_account = CosmosClient(url=f"https://{COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", credential=azure_credential)
+        cosmos_database = cosmos_account.get_database_client(COSMOS_DATABASE_ID)
+        cosmos_container = cosmos_database.get_container_client(COSMOS_CONTAINER_ID)
 
     # Used by the OpenAI SDK
     if OPENAI_HOST == "azure":
@@ -271,7 +267,7 @@ async def setup_clients():
     current_app.config[CONFIG_SEARCH_CLIENT] = search_client
     current_app.config[CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
     current_app.config[CONFIG_AUTH_CLIENT] = auth_helper
-    current_app.config[CONFIG_COSMOS_CLIENT] = cosmos_client
+    current_app.config[CONFIG_COSMOS_CONTAINER] = cosmos_container
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes

@@ -18,27 +18,28 @@ foreach ($line in $output) {
 $backendUri = $env:BACKEND_URI
 $uniqueId = $backendUri.Split("app-backend-")[1].Split(".azurewebsites.net")[0]
 
-$cosmosDbName = "chatlog-$uniqueId"
+$cosmosAccName = "chatlog-$uniqueId"
 $resGrp = $env:AZURE_RESOURCE_GROUP
 $loc = $env:AZURE_LOCATION
 
 # print the name of the Cosmos DB instance
 Write-Host "Creating Cosmos DB instance:"
-Write-Host "  name:     $cosmosDbName"
+Write-Host "  name:     $cosmosAccName"
 Write-Host "  group:    $resGrp"
 Write-Host "  location: $loc"
 Write_Host "..."
 
-az cosmosdb create --name $cosmosDbName `
+az cosmosdb create --name $cosmosAccName `
                    --resource-group $resGrp `
                    --default-consistency-level Eventual `
                    --locations regionName=$loc isZoneRedundant=False `
                    --capabilities EnableServerless
 
-# TODO: create a role so that the backend can write to the Cosmos DB instance
-# Write-Host "Creating Cosmos DB role assignment..."
-# az cosmosdb sql role assignment create --account-name $cosmosDbName `
-#                                        --resource-group $resGrp `
-#                                        --scope "/dbs/$cosmosDbName/colls/ChatLog" `
-#                                        --principal-id $env:AZURE_BACKEND_CLIENT_ID `
-#                                        --role-definition-id "b24988ac-6180-42a0-ab88-20f7382dd24c"
+# TODO
+# - Create the DB - default name "ChatLog"
+# - Create the Container - default name "Chats"
+# - Store variables back into AZD ENV
+# - Add variables as config settings on the AppService
+
+# - create the SQL Custom Role and assign to AppService MI (app-backend-BACKEND_URI)
+#   - https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-python?tabs=azure-portal%2Cpasswordless%2Cwindows%2Csign-in-azure-cli%2Csync#create-the-custom-role
