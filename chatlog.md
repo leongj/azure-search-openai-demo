@@ -1,12 +1,12 @@
 # Chat Logging (optional feature)
 
-[This branch](https://github.com/leongj/azure-search-openai-demo/tree/chat-logging) (`chat-logging`) of my repo adds a feature to [azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo) that logs all chats to CosmosDB instance.
+[This branch](https://github.com/leongj/azure-search-openai-demo/tree/chat-logging) (`chat-logging`) of my repo adds a feature to [azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo) that logs all chats to a CosmosDB instance.
 
 Thanks to `@danialtham_msft` for working with me on this one <3
 
 ## Steps
-1. Install the main demo using this branch (e.g. `azd up`)
-2. Run the `chatlogsetup.ps1` script (Powershell)
+1. Install the main demo app using this branch (e.g. using [Local Deployment](https://github.com/leongj/azure-search-openai-demo/tree/chat-logging#local-environment). Then you'll have the required app changes.
+2. Run the `chatlogsetup.ps1` script (Powershell) to create the Cosmos instance, configuration and SQL role permissions.
 
 ## How does it work?
 
