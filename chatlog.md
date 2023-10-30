@@ -19,7 +19,7 @@ The `chatlogsetup.ps1` script does the following:
 2. Create a new CosmosDB account named `chatlog-<uniqueid>`, in the same resource group and location.
 3. Create a database called `ChatLog` and container called `Chats`.
 4. Save the variables to the AZD environment and add them to the AppService configuration as well.
-5. Assign the **SQL role** `CosmosDB Built-in Data Contributor` to the AppService as well as the logged-in user.
+5. Assign the **SQL role** `CosmosDB Built-in Data Contributor` to the AppService Managed Identity as well as the logged-in user.
 
 The feature is enabled immediately
 
