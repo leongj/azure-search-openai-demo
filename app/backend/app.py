@@ -210,9 +210,9 @@ async def setup_clients():
     AZURE_SEARCH_QUERY_SPELLER = os.getenv("AZURE_SEARCH_QUERY_SPELLER", "lexicon")
 
     # Cosmos configs
-    COSMOS_ACCOUNT_NAME = os.environ.get('COSMOS_ACCOUNT_NAME')
-    COSMOS_DATABASE_ID = os.environ.get('COSMOS_DATABASE', 'ChatLog')
-    COSMOS_CONTAINER_ID = os.environ.get('COSMOS_CONTAINER', 'Chats')
+    AZURE_COSMOS_ACCOUNT_NAME = os.environ.get('AZURE_COSMOS_ACCOUNT_NAME')
+    AZURE_COSMOS_DATABASE_ID = os.environ.get('AZURE_COSMOS_DATABASE', 'ChatLog')
+    AZURE_COSMOS_CONTAINER_ID = os.environ.get('AZURE_COSMOS_CONTAINER', 'Chats')
 
     # Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
     # just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the
@@ -242,12 +242,12 @@ async def setup_clients():
     )
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
     # if COSMOS_ACCOUNT_NAME isn't set, the /script/chatlog script hasn't been run. Set this to null so it does nothing in /chatlog
-    if COSMOS_ACCOUNT_NAME is None:
+    if AZURE_COSMOS_ACCOUNT_NAME is None:
         cosmos_client = None
     else:
-        cosmos_account = CosmosClient(url=f"https://{COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", credential=azure_credential)
-        cosmos_database = cosmos_account.get_database_client(COSMOS_DATABASE_ID)
-        cosmos_container = cosmos_database.get_container_client(COSMOS_CONTAINER_ID)
+        cosmos_account = CosmosClient(url=f"https://{AZURE_COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", credential=azure_credential)
+        cosmos_database = cosmos_account.get_database_client(AZURE_COSMOS_DATABASE_ID)
+        cosmos_container = cosmos_database.get_container_client(AZURE_COSMOS_CONTAINER_ID)
 
     # Used by the OpenAI SDK
     if OPENAI_HOST == "azure":
