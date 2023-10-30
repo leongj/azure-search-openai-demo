@@ -1,4 +1,4 @@
-# Chat Logging (optional feature)
+# Chat Logging add-on
 
 [This branch](https://github.com/leongj/azure-search-openai-demo/tree/chat-logging) (`chat-logging`) of my repo adds a feature to [azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo) that logs all chats to a CosmosDB instance.
 
