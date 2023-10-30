@@ -24,5 +24,5 @@ The `chatlogsetup.ps1` script does the following:
 The feature is enabled immediately
 
 Chat logs look like this:
-![Chat log in CosmosDB data explorer](chatlog.png)
+![Chat log in CosmosDB data explorer](docs/chatlog.png)
 
