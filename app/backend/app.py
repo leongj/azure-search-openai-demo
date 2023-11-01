@@ -253,11 +253,13 @@ async def setup_clients():
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
     # if COSMOS_ACCOUNT_NAME isn't set, the /script/chatlog script hasn't been run. Set this to null so it does nothing in /chatlog
     if AZURE_COSMOS_ACCOUNT_NAME is None:
-        cosmos_client = None
+        cosmos_container = None
+        logging.info("AZURE_COSMOS_ACCOUNT_NAME not configured, Chat Logging disabled.")
     else:
         cosmos_account = CosmosClient(url=f"https://{AZURE_COSMOS_ACCOUNT_NAME}.documents.azure.com:443/", credential=azure_credential)
         cosmos_database = cosmos_account.get_database_client(AZURE_COSMOS_DATABASE_ID)
         cosmos_container = cosmos_database.get_container_client(AZURE_COSMOS_CONTAINER_ID)
+        logging.info(f"AZURE_COSMOS_ACCOUNT_NAME configured, Chat Logging enabled to {AZURE_COSMOS_ACCOUNT_NAME}:{AZURE_COSMOS_DATABASE_ID}:{AZURE_COSMOS_CONTAINER_ID}")
 
     # Used by the OpenAI SDK
     if OPENAI_HOST == "azure":
