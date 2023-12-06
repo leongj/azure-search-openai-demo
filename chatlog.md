@@ -10,7 +10,7 @@ Thanks to `@danialtham_msft` for working with me on this one 🙏
 
 ## How does it work?
 
-The frontend creates a unique Id for each chat "thread" (e.g. refresh page, or click "Clear chat" button). The whole conversation is sent to the backend (A new API endpoint, `/chatlog`) as soon as the streaming response is completed. The data is upserted into the Cosmos container and is easily viewable.
+The frontend creates a unique Id for each chat "thread" (e.g. refresh page, or click "Clear chat" button). The whole conversation is sent to the backend (A new API endpoint, `/chatlog`) as soon as the streaming response is completed. The data is upserted into the Cosmos container and is easily viewable. If the App Service has authentication enabled, then /chatlog will attempt to pull the user name from the `X-Ms-Client-Principal-Name` header and include it as the `userId` in the log entry.
 
 The feature is enabled in app code, but is dormant if the value of `AZURE_COSMOS_ACCOUNT_NAME` is not set in the AZD environment.
 
