@@ -172,6 +172,10 @@ async def chatlog():
         return "",204
     
     try:
+        # If authentication is enabled on the App Service, pick out the userId from the headers
+        if request.headers.get('X-Ms-Client-Principal-Name'):
+            request_json['userId'] = request.headers.get('X-Ms-Client-Principal-Name')
+
         await cosmos_container.upsert_item(request_json)
         return "",201
     except Exception as e:

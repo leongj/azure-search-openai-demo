@@ -178,7 +178,7 @@ const Chat = () => {
         if (messages.length != 0) {
             let jsonPl = {
                 id: threadSessionId,
-                userId: "", //TODO: Don't have atm, need to grab it when auth is available
+                userId: "", // This will be filled in by the backend /chatlog endpoint
                 messages: [...messages]
             };
             logConversationRequest(jsonPl);
